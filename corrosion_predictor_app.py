@@ -77,11 +77,11 @@ except Exception as e:
 def get_severity(rate):
     """Return severity string (and emoji) based on corrosion rate."""
     if rate <= 0.1:
-        return "🟢 Low"
+        return "🟢"
     elif rate <= 1.0:
-        return "🟡 Medium"
+        return "🟡"
     else:
-        return "🔴 High"
+        return "🔴"
 
 def get_severity_label(rate):
     """Return simple label Low/Medium/High (no emoji)"""
@@ -413,3 +413,4 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
