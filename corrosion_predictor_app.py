@@ -210,13 +210,12 @@ if "selected_pipe" not in st.session_state:
     st.session_state.selected_pipe = None
 
 # Handle selection via query parameter for interactivity
-query_params = st.query_params
+query_params = st.experimental_get_query_params()
 if "selected_pipe" in query_params:
-    selected = query_params["selected_pipe"]
+    selected = query_params["selected_pipe"][0]  # get first value
     if selected in PIPE_DATA:
         st.session_state.selected_pipe = PIPE_DATA[selected].iloc[0].to_dict()
         st.session_state.selected_pipe_name = selected
-
 # Show clickable colored boxes
 for i, pipe in enumerate(region_pipes):
     pipe_df = PIPE_DATA[pipe].iloc[0]
