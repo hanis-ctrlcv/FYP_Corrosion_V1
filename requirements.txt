@@ -1,6 +1,5 @@
 # === Core Frameworks ===
-
-streamlit
+streamlit==1.26.0
 streamlit-extras==0.4.0
 tensorflow==2.13.0
 keras==2.13.1
@@ -40,3 +39,4 @@ packaging==23.2
 typing_extensions>=4.1.0,<4.6.0
 six==1.16.0
 pytz==2023.3
+
