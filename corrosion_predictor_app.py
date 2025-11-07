@@ -209,44 +209,45 @@ cols = st.columns(5)
 if "selected_pipe" not in st.session_state:
     st.session_state.selected_pipe = None
 
+# Handle selection via query parameter for interactivity
+query_params = st.query_params
+if "selected_pipe" in query_params:
+    selected = query_params["selected_pipe"]
+    if selected in PIPE_DATA:
+        st.session_state.selected_pipe = PIPE_DATA[selected].iloc[0].to_dict()
+        st.session_state.selected_pipe_name = selected
+
+# Show clickable colored boxes
 for i, pipe in enumerate(region_pipes):
     pipe_df = PIPE_DATA[pipe].iloc[0]
     rate = pipe_df["Pred_Ensemble(mm/yr)"]
     color = get_color(rate)
-    severity = get_severity(rate)
-    # prepare css for stylable_container; fallback if not available
-    css = f"""
-        button {{
-            background-color: {color};
-            color: white;
-            font-weight: bold;
-            border-radius: 8px;
-            border: 2px solid #222;
-            padding: 10px;
-            height: 90px;
-            width: 120px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: all 0.2s ease-in-out;
-            white-space: pre-line;
-        }}
-        button:hover {{
-            transform: scale(1.05);
-            filter: brightness(1.1);
-        }}
+    emoji = get_severity(rate)
+    label = get_severity_label(rate)
+    
+    button_html = f"""
+        <a href="?selected_pipe={pipe}" target="_self">
+            <button type="button" style="
+                background-color: {color};
+                color: white;
+                font-weight: bold;
+                border: none;
+                border-radius: 10px;
+                padding: 10px;
+                width: 120px;
+                height: 90px;
+                margin: 5px;
+                font-size: 15px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                cursor: pointer;
+                transition: 0.2s all ease-in-out;
+            ">
+                {pipe}<br>{emoji} {label}
+            </button>
+        </a>
     """
-
     with cols[i % 5]:
-        if STYLABLE_AVAILABLE:
-            with stylable_container(key=f"pipe_btn_{pipe}", css_styles=css):
-                if st.button(f"{pipe}\n{severity}", key=f"{pipe}_button"):
-                    # store a plain dict to avoid pandas Series truth ambiguity
-                    st.session_state.selected_pipe = PIPE_DATA[pipe].iloc[0].to_dict()
-                    st.session_state.selected_pipe_name = pipe
-        else:
-            # fallback: plain button (no custom CSS)
-            if st.button(f"{pipe}  {severity}", key=f"{pipe}_button"):
-                st.session_state.selected_pipe = PIPE_DATA[pipe].iloc[0].to_dict()
-                st.session_state.selected_pipe_name = pipe
+        st.markdown(button_html, unsafe_allow_html=True)
 
 # --- PIPE DETAILS PANEL ---
 if st.session_state.selected_pipe is not None:
@@ -413,4 +414,5 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
 
