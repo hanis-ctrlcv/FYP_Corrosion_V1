@@ -51,7 +51,7 @@ PREPROCESSOR_PATH = "preprocessor_corrosion.joblib"
 RF_PATH = "rf_model.joblib"
 XGB_PATH = "xgb_model.json"
 DATA_PATH = "cleaned_corrosion_regression_data.csv"
-SAMPLE_20_PATH = "random_20_samples.csv"  # your random 20-row CSV
+SAMPLE_20_PATH = "random_20_samples.csv" 
 
 st.title("Corrosion Monitoring Dashboard")
 st.caption("Powered by Reinforced Deep Learning (DL + RF + XGB Ensemble) ✅")
@@ -413,4 +413,3 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
-
