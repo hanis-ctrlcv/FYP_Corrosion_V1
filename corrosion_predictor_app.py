@@ -161,8 +161,8 @@ query_params = st.experimental_get_query_params()
 if "region" in query_params:
     reg = query_params["region"][0]
     if reg in regions:
-        st.session_state.selected_region = reg
-
+        selected_region = reg
+        
 selected_region = st.selectbox(
     "Select Region:",
     regions,
@@ -278,4 +278,5 @@ if st.session_state.selected_pipe is not None:
 # REMAINING SECTIONS (unchanged)
 # ============================================================
 # Keep your summary table, CSV upload, visualization, accuracy, etc.
+
 
