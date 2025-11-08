@@ -257,9 +257,9 @@ if st.session_state.selected_pipe is not None:
     severity = get_severity(rate)
 
     # Remaining Life Calculation (simple deterministic)
-    T_CURRENT =10.0
-    T_MIN = 5.0
-    MAE = 0.1187  # you may set based on model evaluation
+    T_CURRENT = st.sidebar.number_input("Current thickness (mm)", value=10.0, step=0.5)
+    T_MIN = st.sidebar.number_input("Minimum allowable thickness (mm)", value=5.0, step=0.5)
+    MAE = 0.15  # you may set based on model evaluation
     PITTING_FACTOR = 1.5
 
     r_eff = (max(rate, 0.0) + MAE) * PITTING_FACTOR
@@ -413,6 +413,4 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
-
-
 
