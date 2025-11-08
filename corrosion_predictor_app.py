@@ -125,15 +125,19 @@ st.subheader("🌍 Regional Pipeline Overview")
 
 regions = ["Peninsular", "Sabah", "Sarawak"]
 
-# Keep selected region persistent between reruns
+# Keep region selection persistent
 if "selected_region" not in st.session_state:
     st.session_state.selected_region = "Peninsular"
 
-# If user switches manually, update local state only
-selected_region = st.selectbox("Select Region:", regions, index=regions.index(st.session_state.selected_region))
-st.session_state.selected_region = selected_region  # safe now (only 1 assignment per rerun)
+selected_region = st.selectbox(
+    "Select Region:",
+    regions,
+    index=regions.index(st.session_state.selected_region),
+    key="region_selector"
+)
+st.session_state.selected_region = selected_region
 
-# Assign pipes across regions
+# Assign 20 pipes across 3 regions (10 + 5 + 5)
 if "region_map" not in st.session_state:
     all_pipes = list(PIPE_DATA.keys())
     random.shuffle(all_pipes)
@@ -148,55 +152,35 @@ region_pipes = st.session_state.region_map[selected_region]
 st.markdown(f"### 🚧 {selected_region} Pipeline Corrosion Status")
 cols = st.columns(5)
 
-if "selected_pipe" not in st.session_state:
-    st.session_state.selected_pipe = None
+# Default selection
+if "selected_pipe_name" not in st.session_state:
     st.session_state.selected_pipe_name = None
 
-# Show pipe buttons
+# Display color-coded clickable buttons
 for i, pipe in enumerate(region_pipes):
     pipe_df = PIPE_DATA[pipe].iloc[0]
     rate = pipe_df["Pred_Ensemble(mm/yr)"]
     color = get_color(rate)
     emoji = get_severity(rate)
     label = get_severity_label(rate)
-    btn_html = f"""
-        <button onclick="window.location.search='pipe={pipe}'"
-            style="
-                background-color: {color};
-                color: white;
-                font-weight: bold;
-                border-radius: 10px;
-                border: none;
-                width: 120px;
-                height: 90px;
-                font-size: 15px;
-                margin: 6px;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-                cursor: pointer;
-                transition: 0.2s all ease-in-out;">
-            {pipe}<br>{emoji} {label}
-        </button>
-    """
-    with cols[i % 5]:
-        st.markdown(btn_html, unsafe_allow_html=True)
 
-# Handle URL selection without refreshing region
-query_params = st.experimental_get_query_params()
-if "pipe" in query_params:
-    selected_pipe = query_params["pipe"][0]
-    if selected_pipe in PIPE_DATA:
-        st.session_state.selected_pipe = PIPE_DATA[selected_pipe].iloc[0].to_dict()
-        st.session_state.selected_pipe_name = selected_pipe
+    btn_label = f"{pipe}\n{emoji} {label}"
+
+    # Use Streamlit native button for state update
+    with cols[i % 5]:
+        if st.button(btn_label, key=f"pipe_{pipe}", help=f"Click to view {pipe} details"):
+            st.session_state.selected_pipe_name = pipe
+            st.session_state.selected_pipe = pipe_df.to_dict()
 
 # --- PIPE DETAILS PANEL ---
-if st.session_state.selected_pipe is not None:
+if st.session_state.selected_pipe_name:
     sel = st.session_state.selected_pipe
     sel_name = st.session_state.selected_pipe_name
     rate = sel["Pred_Ensemble(mm/yr)"]
     color = get_color(rate)
     severity = get_severity(rate)
 
-    # Remaining life
+    # Remaining Life Calculation
     T_CURRENT, T_MIN, MAE, PITTING_FACTOR = 10.0, 5.0, 0.15, 1.5
     r_eff = (rate + MAE) * PITTING_FACTOR
     life = (T_CURRENT - T_MIN) / r_eff if r_eff > 0 else np.inf
@@ -269,3 +253,4 @@ corr = df.corr(numeric_only=True)
 fig, ax = plt.subplots(figsize=(12, 8))
 sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
 st.pyplot(fig)
+
