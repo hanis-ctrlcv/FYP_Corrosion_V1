@@ -169,7 +169,7 @@ selected_region = st.selectbox(
     index=regions.index(st.session_state.selected_region),
     key="selected_region"
 )
-st.session_state.selected_region = selected_region
+
 
 # Create new region_map
 if "region_map" not in st.session_state:
@@ -278,3 +278,4 @@ if st.session_state.selected_pipe is not None:
 # REMAINING SECTIONS (unchanged)
 # ============================================================
 # Keep your summary table, CSV upload, visualization, accuracy, etc.
+
