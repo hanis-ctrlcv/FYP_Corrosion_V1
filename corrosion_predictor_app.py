@@ -162,11 +162,15 @@ if "region" in query_params:
     reg = query_params["region"][0]
     if reg in regions:
         selected_region = reg
-        
+    else:
+        selected_region = st.session_state.selected_region
+else:
+    selected_region = st.session_state.selected_region
+
 selected_region = st.selectbox(
     "Select Region:",
     regions,
-    index=regions.index(st.session_state.selected_region),
+    index=regions.index(selected_region),
     key="selected_region"
 )
 
@@ -278,5 +282,6 @@ if st.session_state.selected_pipe is not None:
 # REMAINING SECTIONS (unchanged)
 # ============================================================
 # Keep your summary table, CSV upload, visualization, accuracy, etc.
+
 
 
