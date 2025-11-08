@@ -309,11 +309,52 @@ st.markdown(f"""
 # ============================================================
 # CORRELATION AND PAIRPLOT
 # ============================================================
-st.subheader("📈 Correlation Heatmap of Features")
-corr = df.corr(numeric_only=True)
-fig, ax = plt.subplots(figsize=(12, 8))
-sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
+# ============================================================
+# CORRELATION ANALYSIS BY SEVERITY & PIPE
+# ============================================================
+st.subheader("📈 Correlation Analysis by Severity and Pipe")
+
+# --- Combine PIPE_DATA into a single DataFrame for visualization ---
+all_pipes_data = []
+for pipe, pdata in PIPE_DATA.items():
+    df_temp = pdata.copy()
+    df_temp["Pipe"] = pipe
+    all_pipes_data.append(df_temp)
+
+combined_pipes_df = pd.concat(all_pipes_data, ignore_index=True)
+
+# --- Display overall correlation ---
+st.markdown("#### 🌍 Overall Correlation (All Pipes Combined)")
+corr_all = combined_pipes_df.corr(numeric_only=True)
+fig, ax = plt.subplots(figsize=(10, 7))
+sns.heatmap(corr_all, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
 st.pyplot(fig)
+
+# --- Correlation by severity level ---
+st.markdown("#### 🚦 Correlation by Severity Level")
+
+for sev in ["Low", "Medium", "High"]:
+    subset = combined_pipes_df[combined_pipes_df["Severity"].str.lower() == sev.lower()]
+    if not subset.empty:
+        st.markdown(f"##### {sev} Severity Pipes ({len(subset)} samples)")
+        corr_sub = subset.corr(numeric_only=True)
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sns.heatmap(corr_sub, annot=True, fmt=".2f", cmap="YlGnBu" if sev == "Low" else "YlOrBr" if sev == "Medium" else "Reds", ax=ax)
+        st.pyplot(fig)
+    else:
+        st.info(f"No data found for {sev} severity level.")
+
+# --- Correlation per Pipe ---
+st.markdown("#### 🧩 Individual Pipe Correlation")
+selected_pipe_corr = st.selectbox("Select Pipe to View Correlation:", list(PIPE_DATA.keys()))
+
+pipe_df = PIPE_DATA[selected_pipe_corr]
+corr_pipe = pipe_df.corr(numeric_only=True)
+
+fig, ax = plt.subplots(figsize=(6, 4))
+sns.heatmap(corr_pipe, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
+st.pyplot(fig)
+
 
 st.subheader("🔍 Feature Interaction Overview (Pairplot)")
 selected_cols = [c for c in ["Rate (mm/yr)", "Concentration_%", "Temperature_C", "Aggressiveness_Index"] if c in df.columns]
@@ -322,6 +363,7 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
 
 
 
