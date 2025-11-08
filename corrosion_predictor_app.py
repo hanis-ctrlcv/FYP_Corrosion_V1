@@ -181,7 +181,7 @@ if st.session_state.selected_pipe_name:
     severity = get_severity(rate)
 
     # Remaining Life Calculation
-    T_CURRENT, T_MIN, MAE, PITTING_FACTOR = 10.0, 5.0, 0.15, 1.5
+    T_CURRENT, T_MIN, MAE, PITTING_FACTOR = 10.0, 5.0, 0.0915, 1.5
     r_eff = (rate + MAE) * PITTING_FACTOR
     life = (T_CURRENT - T_MIN) / r_eff if r_eff > 0 else np.inf
 
@@ -327,6 +327,7 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
 
 
 
