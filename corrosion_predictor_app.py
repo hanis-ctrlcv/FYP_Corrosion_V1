@@ -225,32 +225,103 @@ for p in region_pipes:
 st.dataframe(pd.DataFrame(summary), use_container_width=True)
 
 # ============================================================
-# MODEL PERFORMANCE VISUALIZATION
+# SECTION 4 — CSV UPLOAD FOR BULK PREDICTION
 # ============================================================
-st.subheader("📊 Model Prediction Comparison")
-X = df.drop(columns=["Rate (mm/yr)"], errors="ignore")
-y = df["Rate (mm/yr)"] if "Rate (mm/yr)" in df.columns else df.iloc[:, 0]
-X_prep = preprocessor.transform(X)
+st.subheader("📥 Upload CSV for Bulk Prediction")
+uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
+if uploaded_file:
+    user_df = pd.read_csv(uploaded_file)
+    st.dataframe(user_df.head(), use_container_width=True)
 
-y_dl = model_dl.predict(X_prep).ravel()
-y_rf = rf.predict(X_prep)
-y_xgb = xgb.predict(X_prep)
+    if st.button("🔮 Run Predictions on uploaded CSV"):
+        try:
+            expected = list(preprocessor.feature_names_in_)
+            user_df_reindexed = user_df.reindex(columns=expected)
+            X_new = preprocessor.transform(user_df_reindexed)
+
+            p_dl = model_dl.predict(X_new).ravel()
+            p_rf = rf.predict(X_new)
+            p_xgb = xgb.predict(X_new)
+            p_ens = (p_dl + p_rf + p_xgb) / 3
+
+            result_df = pd.DataFrame({
+                "Environment": user_df.get("Environment", None),
+                "Material Family": user_df.get("Material Family", None),
+                "Concentration_%": user_df.get("Concentration_%", None),
+                "Temperature_C": user_df.get("Temperature_C", None),
+                "Pred_DL(mm/yr)": p_dl,
+                "Pred_RF(mm/yr)": p_rf,
+                "Pred_XGB(mm/yr)": p_xgb,
+                "Pred_Reinforced_DL(mm/yr)": p_ens,
+                "Severity": [get_severity(v) for v in p_ens]
+            })
+
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            os.makedirs("predictions", exist_ok=True)
+            out_path = f"predictions/prediction_{timestamp}.csv"
+            result_df.to_csv(out_path, index=False)
+            st.success(f"✅ Prediction Complete — Saved to {out_path}")
+            st.dataframe(result_df.head(20), use_container_width=True)
+        except Exception as e:
+            st.error(f"❌ Error during prediction: {e}")
+
+# ============================================================
+# SECTION 5 — MODEL VISUALIZATION & ACCURACY
+# ============================================================
+st.subheader("📊 Model Prediction Comparison (training dataset)")
+X = df.drop(columns=["Rate (mm/yr)"], errors="ignore")
+y = df["Rate (mm/yr)"] if "Rate (mm/yr)" in df.columns else df.iloc[:, 0]  # fallback
+X_prepared = preprocessor.transform(X)
+
+y_dl = model_dl.predict(X_prepared).ravel()
+y_rf = rf.predict(X_prepared)
+y_xgb = xgb.predict(X_prepared)
 y_ens = (y_dl + y_rf + y_xgb) / 3
 
-viz = pd.DataFrame({"Actual": y, "Reinforced DL": y_ens})
-fig = px.scatter(viz, x="Actual", y="Reinforced DL", title="Actual vs Predicted (Reinforced DL)")
+df_viz = pd.DataFrame({
+    "Actual": y,
+    "Deep Learning": y_dl,
+    "Random Forest": y_rf,
+    "XGBoost": y_xgb,
+    "Reinforced Deep Learning": y_ens
+})
+
+melted = df_viz.melt(id_vars="Actual", var_name="Model", value_name="Predicted")
+fig = px.scatter(melted, x="Actual", y="Predicted", color="Model", title="Actual vs Predicted Corrosion Rate")
 fig.add_shape(type="line", x0=y.min(), y0=y.min(), x1=y.max(), y1=y.max(), line=dict(color="black", dash="dash"))
 st.plotly_chart(fig, use_container_width=True)
 
-r2, mae, rmse = r2_score(y, y_ens), mean_absolute_error(y, y_ens), np.sqrt(mean_squared_error(y, y_ens))
-st.success(f"✅ R²={r2:.3f}, MAE={mae:.3f}, RMSE={rmse:.3f}")
+# Accuracy summary
+r2_val = r2_score(y, y_ens)
+mae_val = mean_absolute_error(y, y_ens)
+rmse_val = np.sqrt(mean_squared_error(y, y_ens))
+accuracy_pct = r2_val * 100
+
+st.markdown(f"""
+<div style='background-color:#E8F6EF;padding:15px;border-radius:10px;margin-top:10px;'>
+    <h4 style='text-align:center;color:#1E8449;'>
+        ✅ <b>Reinforced Deep Learning Accuracy: {accuracy_pct:.2f}%</b><br>
+        (R² = {r2_val:.4f}, MAE = {mae_val:.4f}, RMSE = {rmse_val:.4f})
+    </h4>
+</div>
+""", unsafe_allow_html=True)
 
 # ============================================================
-# CORRELATION HEATMAP
+# CORRELATION AND PAIRPLOT
 # ============================================================
-st.subheader("📈 Correlation Heatmap")
+st.subheader("📈 Correlation Heatmap of Features")
 corr = df.corr(numeric_only=True)
 fig, ax = plt.subplots(figsize=(12, 8))
-sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
+sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
 st.pyplot(fig)
+
+st.subheader("🔍 Feature Interaction Overview (Pairplot)")
+selected_cols = [c for c in ["Rate (mm/yr)", "Concentration_%", "Temperature_C", "Aggressiveness_Index"] if c in df.columns]
+if len(selected_cols) >= 2:
+    sns.pairplot(df[selected_cols], diag_kind="kde", corner=True)
+    st.pyplot(plt)
+else:
+    st.info("Not enough columns available for pairplot.")
+
+
 
