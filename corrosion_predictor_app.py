@@ -156,18 +156,44 @@ cols = st.columns(5)
 if "selected_pipe_name" not in st.session_state:
     st.session_state.selected_pipe_name = None
 
-# Display color-coded clickable buttons
+# Display color-filled emoji-only buttons
 for i, pipe in enumerate(region_pipes):
     pipe_df = PIPE_DATA[pipe].iloc[0]
     rate = pipe_df["Pred_Ensemble(mm/yr)"]
     color = get_color(rate)
     emoji = get_severity(rate)
 
-    btn_label = f"{pipe}\n{emoji}"
+    # The label now only shows emoji
+    btn_label = f"{pipe}<br><span style='font-size:22px'>{emoji}</span>"
 
-    # Use Streamlit native button for state update
+    # Create custom-styled colored button
     with cols[i % 5]:
-        if st.button(btn_label, key=f"pipe_{pipe}", help=f"Click to view {pipe} details"):
+        if st.markdown(
+            f"""
+            <div style="
+                background-color: {color};
+                color: white;
+                font-weight: bold;
+                text-align: center;
+                border-radius: 12px;
+                padding: 15px;
+                width: 150px;
+                height: 100px;
+                margin: 8px auto;
+                font-size: 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                cursor: pointer;
+                transition: 0.2s all ease-in-out;
+            "
+            onmouseover="this.style.transform='scale(1.07)'; this.style.filter='brightness(1.1)';"
+            onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"
+            onclick="window.location.href='?selected_pipe={pipe}'"
+            >
+                {btn_label}
+            </div>
+            """,
+            unsafe_allow_html=True
+        ):
             st.session_state.selected_pipe_name = pipe
             st.session_state.selected_pipe = pipe_df.to_dict()
 
@@ -199,11 +225,12 @@ if st.session_state.selected_pipe_name:
         🔹 <b>Pred_RF(mm/yr):</b> {sel['Pred_RF(mm/yr)']:.4f}<br>
         🔹 <b>Pred_XGB(mm/yr):</b> {sel['Pred_XGB(mm/yr)']:.4f}<br>
         🔹 <b>Pred_Ensemble(mm/yr):</b> {rate:.4f}<br><br>
-         <b>Severity:</b> <span style='color:{color};font-weight:bold;'>{severity}</span><br>
+         <b>Severity:</b> <span style='font-size:22px'>{severity}</span><br>
          <b>Estimated Remaining Life:</b> {life:.2f} years
         </p>
     </div>
     """, unsafe_allow_html=True)
+
 
 # ============================================================
 # REGION SUMMARY TABLE
@@ -326,6 +353,7 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
 
 
 
