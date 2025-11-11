@@ -157,6 +157,7 @@ if "selected_pipe_name" not in st.session_state:
     st.session_state.selected_pipe_name = None
 
 # Display color-coded clickable buttons
+# Display color-filled clickable boxes
 for i, pipe in enumerate(region_pipes):
     pipe_df = PIPE_DATA[pipe].iloc[0]
     rate = pipe_df["Pred_Ensemble(mm/yr)"]
@@ -164,13 +165,36 @@ for i, pipe in enumerate(region_pipes):
     emoji = get_severity(rate)
     label = get_severity_label(rate)
 
-    btn_label = f"{pipe}\n{emoji} {label}"
+    # Build styled HTML button with full background color
+    btn_html = f"""
+    <button onclick="window.location.href='?pipe={pipe}'" 
+        style="
+            background-color: {color};
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            width: 150px;
+            height: 100px;
+            margin: 8px;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            cursor: pointer;
+            transition: 0.2s all ease-in-out;
+        "
+        onmouseover="this.style.transform='scale(1.07)'; this.style.filter='brightness(1.1)';"
+        onmouseout="this.style.transform='scale(1)'; this.style.filter='brightness(1)';"
+    >
+        {pipe}<br>{emoji} {label}
+    </button>
+    """
 
-    # Use Streamlit native button for state update
     with cols[i % 5]:
-        if st.button(btn_label, key=f"pipe_{pipe}", help=f"Click to view {pipe} details"):
+        if st.markdown(btn_html, unsafe_allow_html=True):
             st.session_state.selected_pipe_name = pipe
             st.session_state.selected_pipe = pipe_df.to_dict()
+
 
 # --- PIPE DETAILS PANEL ---
 if st.session_state.selected_pipe_name:
@@ -327,6 +351,7 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
 
 
 
