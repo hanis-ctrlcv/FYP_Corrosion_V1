@@ -68,11 +68,11 @@ except Exception as e:
 # ============================================================
 def get_severity(rate):
     if rate <= 0.1:
-        return "🟢"
+        return "🟢low"
     elif rate <= 1.0:
-        return "🟡"
+        return "🟡medium"
     else:
-        return "🔴"
+        return "🔴hign"
 
 def get_severity_label(rate):
     if rate <= 0.1:
@@ -162,9 +162,8 @@ for i, pipe in enumerate(region_pipes):
     rate = pipe_df["Pred_Ensemble(mm/yr)"]
     color = get_color(rate)
     emoji = get_severity(rate)
-    label = get_severity_label(rate)
 
-    btn_label = f"{pipe}\n{emoji} {label}"
+    btn_label = f"{pipe}\n{emoji}"
 
     # Use Streamlit native button for state update
     with cols[i % 5]:
@@ -327,6 +326,7 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
 
 
 
