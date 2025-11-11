@@ -156,50 +156,54 @@ cols = st.columns(5)
 if "selected_pipe_name" not in st.session_state:
     st.session_state.selected_pipe_name = None
 
-# Display true clickable, colored Streamlit buttons (emoji-only)
+# Display color-coded clickable buttons
 for i, pipe in enumerate(region_pipes):
     pipe_df = PIPE_DATA[pipe].iloc[0]
     rate = pipe_df["Pred_Ensemble(mm/yr)"]
     color = get_color(rate)
     emoji = get_severity(rate)
 
-    btn_label = f"{pipe}<br><span style='font-size:26px'>{emoji}</span>"
+    btn_label = f"{pipe}\n{emoji}"
 
-    # Apply colored button styling using markdown wrapper + transparent Streamlit button
+    # Use Streamlit native button for state update
     with cols[i % 5]:
-        st.markdown(
-            f"""
-            <style>
-            div[data-testid="stButton"] button[title="{pipe}"] {{
-                background-color: {color};
-                color: white;
-                border: none;
-                border-radius: 12px;
-                font-weight: bold;
-                text-align: center;
-                padding: 15px;
-                width: 150px !important;
-                height: 100px !important;
-                margin: 6px auto;
-                font-size: 16px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-                cursor: pointer;
-                transition: 0.2s all ease-in-out;
-            }}
-            div[data-testid="stButton"] button[title="{pipe}"]:hover {{
-                transform: scale(1.07);
-                filter: brightness(1.1);
-            }}
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-
-        if st.button(btn_label, key=f"pipe_{pipe}", help=f"Click to view {pipe} details", use_container_width=True):
+        if st.button(btn_label, key=f"pipe_{pipe}", help=f"Click to view {pipe} details"):
             st.session_state.selected_pipe_name = pipe
             st.session_state.selected_pipe = pipe_df.to_dict()
 
+# --- PIPE DETAILS PANEL ---
+if st.session_state.selected_pipe_name:
+    sel = st.session_state.selected_pipe
+    sel_name = st.session_state.selected_pipe_name
+    rate = sel["Pred_Ensemble(mm/yr)"]
+    color = get_color(rate)
+    severity = get_severity(rate)
 
+    # Remaining Life Calculation
+    T_CURRENT, T_MIN, MAE, PITTING_FACTOR = 10.0, 5.0, 0.0915, 1.5
+    r_eff = (rate + MAE) * PITTING_FACTOR
+    life = (T_CURRENT - T_MIN) / r_eff if r_eff > 0 else np.inf
+
+    st.markdown(f"""
+    <div style='background-color:#f7f9f9;border-radius:12px;padding:15px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);margin-top:20px;'>
+        <h4 style='text-align:center;color:{color};'>
+            📊 Selected Pipe Details — <b>{sel_name} ({selected_region})</b>
+        </h4>
+        <p style='font-size:16px;line-height:1.6;'>
+         <b>Environment:</b> {sel['Environment']}<br>
+         <b>Material:</b> {sel['Material Family']}<br>
+         <b>Concentration:</b> {sel['Concentration_%']:.2f} %<br>
+         <b>Temperature:</b> {sel['Temperature_C']:.2f} °C<br><br>
+        🔹 <b>Pred_DL(mm/yr):</b> {sel['Pred_DL(mm/yr)']:.4f}<br>
+        🔹 <b>Pred_RF(mm/yr):</b> {sel['Pred_RF(mm/yr)']:.4f}<br>
+        🔹 <b>Pred_XGB(mm/yr):</b> {sel['Pred_XGB(mm/yr)']:.4f}<br>
+        🔹 <b>Pred_Ensemble(mm/yr):</b> {rate:.4f}<br><br>
+         <b>Severity:</b> <span style='color:{color};font-weight:bold;'>{severity}</span><br>
+         <b>Estimated Remaining Life:</b> {life:.2f} years
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ============================================================
 # REGION SUMMARY TABLE
@@ -322,9 +326,6 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
-
-
-
 
 
 
