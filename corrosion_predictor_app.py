@@ -50,8 +50,8 @@ MODEL_PATH = "final_corrosion_model.keras"
 PREPROCESSOR_PATH = "preprocessor_corrosion.joblib"
 RF_PATH = "rf_model.joblib"
 XGB_PATH = "xgb_model.json"
-DATA_PATH = "C:/Users/HANIS/python jupiter/FYP/venv/dataset/cleaned_corrosion_regression_data.csv"
-SAMPLE_20_PATH = "C:/Users/HANIS/python jupiter/FYP/tf10_env/random_20_samples.csv"  # your random 20-row CSV
+DATA_PATH = "cleaned_corrosion_regression_data.csv"
+SAMPLE_20_PATH = "random_20_samples.csv"  # your random 20-row CSV
 
 st.title("Corrosion Monitoring Dashboard")
 st.caption("Powered by Reinforced Deep Learning (DL + RF + XGB Ensemble) ✅")
@@ -470,3 +470,4 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
