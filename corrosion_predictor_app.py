@@ -123,65 +123,93 @@ st.dataframe(df.head(), use_container_width=True)
 # ============================================================
 st.subheader("🌍 Regional Pipeline Overview")
 
+# Define regions (3 only)
 regions = ["Peninsular", "Sabah", "Sarawak"]
 
-# Keep region selection persistent
-if "selected_region" not in st.session_state:
-    st.session_state.selected_region = "Peninsular"
+# Region selector
+selected_region = st.selectbox("Select Region:", regions)
 
-selected_region = st.selectbox(
-    "Select Region:",
-    regions,
-    index=regions.index(st.session_state.selected_region),
-    key="region_selector"
-)
-st.session_state.selected_region = selected_region
-
-# Assign 20 pipes across 3 regions (10 + 5 + 5)
+# Create new region_map only if not already in session
 if "region_map" not in st.session_state:
     all_pipes = list(PIPE_DATA.keys())
     random.shuffle(all_pipes)
-    st.session_state.region_map = {
-        "Peninsular": all_pipes[:10],
-        "Sabah": all_pipes[10:15],
-        "Sarawak": all_pipes[15:20],
+
+    # Weighted distribution (10 + 5 + 5 = 20 pipes)
+    peninsular_pipes = all_pipes[:10]
+    sabah_pipes = all_pipes[10:15]
+    sarawak_pipes = all_pipes[15:20]
+
+    region_map = {
+        "Peninsular": peninsular_pipes,
+        "Sabah": sabah_pipes,
+        "Sarawak": sarawak_pipes
     }
+
+    st.session_state.region_map = region_map
 
 region_pipes = st.session_state.region_map[selected_region]
 
-st.markdown(f"### 🚧 {selected_region} Pipeline Corrosion Status")
+st.markdown(f"### {selected_region} Pipeline Corrosion Status")
 cols = st.columns(5)
 
-# Default selection
-if "selected_pipe_name" not in st.session_state:
-    st.session_state.selected_pipe_name = None
+# create session_state.selected_pipe default
+if "selected_pipe" not in st.session_state:
+    st.session_state.selected_pipe = None
 
-# Display color-coded clickable buttons
 for i, pipe in enumerate(region_pipes):
     pipe_df = PIPE_DATA[pipe].iloc[0]
     rate = pipe_df["Pred_Ensemble(mm/yr)"]
     color = get_color(rate)
-    emoji = get_severity(rate)
+    severity = get_severity(rate)
+    # prepare css for stylable_container; fallback if not available
+    css = f"""
+        button {{
+            background-color: {color};
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+            border: 2px solid #222;
+            padding: 10px;
+            height: 90px;
+            width: 120px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s ease-in-out;
+            white-space: pre-line;
+        }}
+        button:hover {{
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }}
+    """
 
-    btn_label = f"{pipe}\n{emoji}"
-
-    # Use Streamlit native button for state update
     with cols[i % 5]:
-        if st.button(btn_label, key=f"pipe_{pipe}", help=f"Click to view {pipe} details"):
-            st.session_state.selected_pipe_name = pipe
-            st.session_state.selected_pipe = pipe_df.to_dict()
+        if STYLABLE_AVAILABLE:
+            with stylable_container(key=f"pipe_btn_{pipe}", css_styles=css):
+                if st.button(f"{pipe}\n{severity}", key=f"{pipe}_button"):
+                    # store a plain dict to avoid pandas Series truth ambiguity
+                    st.session_state.selected_pipe = PIPE_DATA[pipe].iloc[0].to_dict()
+                    st.session_state.selected_pipe_name = pipe
+        else:
+            # fallback: plain button (no custom CSS)
+            if st.button(f"{pipe}  {severity}", key=f"{pipe}_button"):
+                st.session_state.selected_pipe = PIPE_DATA[pipe].iloc[0].to_dict()
+                st.session_state.selected_pipe_name = pipe
 
 # --- PIPE DETAILS PANEL ---
-if st.session_state.selected_pipe_name:
+if st.session_state.selected_pipe is not None:
     sel = st.session_state.selected_pipe
-    sel_name = st.session_state.selected_pipe_name
-    rate = sel["Pred_Ensemble(mm/yr)"]
+    sel_name = st.session_state.get("selected_pipe_name", "PIPE")
+    rate = sel.get("Pred_Ensemble(mm/yr)", np.nan)
     color = get_color(rate)
     severity = get_severity(rate)
 
-    # Remaining Life Calculation
-    T_CURRENT, T_MIN, MAE, PITTING_FACTOR = 10.0, 5.0, 0.0915, 1.5
-    r_eff = (rate + MAE) * PITTING_FACTOR
+    # Remaining Life Calculation (simple deterministic)
+    T_CURRENT = st.sidebar.number_input("Current thickness (mm)", value=10.0, step=0.5)
+    T_MIN = st.sidebar.number_input("Minimum allowable thickness (mm)", value=5.0, step=0.5)
+    MAE = 0.15  # you may set based on model evaluation
+    PITTING_FACTOR = 1.5
+
+    r_eff = (max(rate, 0.0) + MAE) * PITTING_FACTOR
     life = (T_CURRENT - T_MIN) / r_eff if r_eff > 0 else np.inf
 
     st.markdown(f"""
@@ -191,19 +219,20 @@ if st.session_state.selected_pipe_name:
             📊 Selected Pipe Details — <b>{sel_name} ({selected_region})</b>
         </h4>
         <p style='font-size:16px;line-height:1.6;'>
-         <b>Environment:</b> {sel['Environment']}<br>
-         <b>Material:</b> {sel['Material Family']}<br>
-         <b>Concentration:</b> {sel['Concentration_%']:.2f} %<br>
-         <b>Temperature:</b> {sel['Temperature_C']:.2f} °C<br><br>
-        🔹 <b>Pred_DL(mm/yr):</b> {sel['Pred_DL(mm/yr)']:.4f}<br>
-        🔹 <b>Pred_RF(mm/yr):</b> {sel['Pred_RF(mm/yr)']:.4f}<br>
-        🔹 <b>Pred_XGB(mm/yr):</b> {sel['Pred_XGB(mm/yr)']:.4f}<br>
+         <b>Environment:</b> {sel.get('Environment', '—')}<br>
+         <b>Material:</b> {sel.get('Material Family', '—')}<br>
+         <b>Concentration:</b> {sel.get('Concentration_%', 0):.2f} %<br>
+         <b>Temperature:</b> {sel.get('Temperature_C', 0):.2f} °C<br><br>
+        🔹 <b>Pred_DL(mm/yr):</b> {sel.get('Pred_DL(mm/yr)', np.nan):.4f}<br>
+        🔹 <b>Pred_RF(mm/yr):</b> {sel.get('Pred_RF(mm/yr)', np.nan):.4f}<br>
+        🔹 <b>Pred_XGB(mm/yr):</b> {sel.get('Pred_XGB(mm/yr)', np.nan):.4f}<br>
         🔹 <b>Pred_Ensemble(mm/yr):</b> {rate:.4f}<br><br>
          <b>Severity:</b> <span style='color:{color};font-weight:bold;'>{severity}</span><br>
          <b>Estimated Remaining Life:</b> {life:.2f} years
         </p>
     </div>
     """, unsafe_allow_html=True)
+
 
 # ============================================================
 # REGION SUMMARY TABLE
@@ -329,6 +358,7 @@ if len(selected_cols) >= 2:
     st.pyplot(plt)
 else:
     st.info("Not enough columns available for pairplot.")
+
 
 
 
