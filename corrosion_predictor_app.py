@@ -305,10 +305,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 # ============================================================
-# CORRELATION ANALYSIS BY SEVERITY & PIPE
+# CORRELATION AND PAIRPLOT
 # ============================================================
-
-st.subheader("Average Corrosion Rate by Material Family")
 # Average Corrosion Rate by Material Family
 avg_rates = df.groupby("Material Family")["Rate (mm/yr)"].mean().sort_values()
 fig = px.bar(avg_rates, x=avg_rates.index, y=avg_rates.values,
@@ -316,13 +314,58 @@ fig = px.bar(avg_rates, x=avg_rates.index, y=avg_rates.values,
              color_continuous_scale="RdYlGn_r")
 st.plotly_chart(fig, use_container_width=True)
 
-st.subheader(" Correlation Heatmap of Features")
+
+
+
+fig = px.scatter(
+    df, x="Temperature_C", y="Rate (mm/yr)", color="Material Family",
+    title="Temperature vs Corrosion Rate by Material Type"
+)
+st.plotly_chart(fig, use_container_width=True)
+
+col1, col2 = st.columns(2)
+
+# --- Left: Severity Distribution ---
+with col1:
+    severity_counts = pd.Series([PIPE_DATA[p].iloc[0]["Severity"] for p in PIPE_DATA])
+    fig1 = px.pie(
+        values=severity_counts.value_counts(),
+        names=severity_counts.value_counts().index,
+        title="Corrosion Severity Distribution",
+        hole=0.3,
+        color_discrete_sequence=["#F1C40F", "#E74C3C", "#2ECC71"]  # "#2ECC71"
+    )
+    st.plotly_chart(fig1, use_container_width=True)
+
+# --- Right: Remaining Life vs Corrosion Rate ---
+with col2:
+    life_data = []
+    for name, data in PIPE_DATA.items():
+        r = data.iloc[0]["Pred_Ensemble(mm/yr)"]
+        T_CURRENT, T_MIN, MAE, PITTING_FACTOR = 10.0, 5.0, 0.0915, 1.5
+        r_eff = (r + MAE) * PITTING_FACTOR
+        life = (T_CURRENT - T_MIN) / r_eff if r_eff > 0 else np.inf
+        life_data.append({"Pipe": name, "Rate": r, "Remaining Life": life})
+
+    life_df = pd.DataFrame(life_data)
+    fig2 = px.scatter(
+        life_df,
+        x="Rate",
+        y="Remaining Life",
+        color="Rate",
+        title="Predicted Remaining Life vs Corrosion Rate",
+        color_continuous_scale="RdYlGn_r",
+        hover_name="Pipe"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
+    
+    st.subheader("📈 Correlation Heatmap of Features")
 corr = df.corr(numeric_only=True)
 fig, ax = plt.subplots(figsize=(12, 8))
 sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
 st.pyplot(fig)
 
-st.subheader("Feature Interaction Overview (Pairplot)")
+st.subheader("🔍 Feature Interaction Overview (Pairplot)")
 selected_cols = [c for c in ["Rate (mm/yr)", "Concentration_%", "Temperature_C", "Aggressiveness_Index"] if c in df.columns]
 if len(selected_cols) >= 2:
     sns.pairplot(df[selected_cols], diag_kind="kde", corner=True)
