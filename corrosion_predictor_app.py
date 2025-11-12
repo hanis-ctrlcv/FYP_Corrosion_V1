@@ -359,19 +359,33 @@ with col2:
     )
     st.plotly_chart(fig2, use_container_width=True)
     
-    st.subheader("📈 Correlation Heatmap of Features")
-corr = df.corr(numeric_only=True)
-fig, ax = plt.subplots(figsize=(12, 8))
-sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
-st.pyplot(fig)
 
-st.subheader("🔍 Feature Interaction Overview (Pairplot)")
-selected_cols = [c for c in ["Rate (mm/yr)", "Concentration_%", "Temperature_C", "Aggressiveness_Index"] if c in df.columns]
-if len(selected_cols) >= 2:
-    sns.pairplot(df[selected_cols], diag_kind="kde", corner=True)
-    st.pyplot(plt)
-else:
-    st.info("Not enough columns available for pairplot.")
+# Create two columns
+col1, col2 = st.columns(2)
+
+# --- LEFT: Correlation Heatmap ---
+with col1:
+    st.markdown("#### 📈 Correlation Heatmap of Features")
+    corr = df.corr(numeric_only=True)
+    fig1, ax1 = plt.subplots(figsize=(6, 5))
+    sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax1)
+    st.pyplot(fig1)
+
+
+# --- RIGHT: Pairplot ---
+with col2:
+    st.markdown("#### 🔍 Feature Interaction Overview (Pairplot)")
+    selected_cols = [
+        c for c in ["Rate (mm/yr)", "Concentration_%", "Temperature_C", "Aggressiveness_Index"]
+        if c in df.columns
+    ]
+    if len(selected_cols) >= 2:
+        fig2 = sns.pairplot(df[selected_cols], diag_kind="kde", corner=True)
+        st.pyplot(fig2)
+    else:
+        st.info("Not enough columns available for pairplot.")
+
+
 
 
 
