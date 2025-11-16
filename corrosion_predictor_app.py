@@ -45,7 +45,7 @@ XGB_PATH = "xgb_model.json"
 DATA_PATH = "cleaned_corrosion_regression_data.csv"
 SAMPLE_20_PATH = "random_20_samples.csv"
 
-st.title("🛠️ Corrosion Monitoring Dashboard")
+st.title("Corrosion Monitoring Dashboard")
 st.caption("Powered by Reinforced Deep Learning (DL + RF + XGB Ensemble) ✅")
 
 # ============================================================
@@ -115,13 +115,13 @@ for i, row in sample_df.iterrows():
 # ============================================================
 # SECTION 1 — DATASET OVERVIEW
 # ============================================================
-st.subheader("📂 Trained Dataset Overview")
+st.subheader("Trained Dataset Overview")
 st.dataframe(df.head(), use_container_width=True)
 
 # ============================================================
 # SECTION 2 — REGIONAL PIPELINE OVERVIEW
 # ============================================================
-st.subheader("🌍 Regional Pipeline Overview")
+st.subheader("Regional Pipeline Overview")
 
 regions = ["Peninsular", "Sabah", "Sarawak"]
 
@@ -149,7 +149,7 @@ if "region_map" not in st.session_state:
 
 region_pipes = st.session_state.region_map[selected_region]
 
-st.markdown(f"### 🚧 {selected_region} Pipeline Corrosion Status")
+st.markdown(f"### {selected_region} Pipeline Corrosion Status")
 cols = st.columns(5)
 
 # Default selection
@@ -208,7 +208,7 @@ if st.session_state.selected_pipe_name:
 # ============================================================
 # REGION SUMMARY TABLE
 # ============================================================
-st.subheader("📋 Region Pipe Summary")
+st.subheader("Region Pipe Summary")
 summary = []
 for p in region_pipes:
     d = PIPE_DATA[p].iloc[0]
@@ -226,7 +226,7 @@ st.dataframe(pd.DataFrame(summary), use_container_width=True)
 # ============================================================
 # SECTION 4 — CSV UPLOAD FOR BULK PREDICTION
 # ============================================================
-st.subheader("📥 Upload CSV for Bulk Prediction")
+st.subheader("Upload CSV for Bulk Prediction")
 uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
 if uploaded_file:
     user_df = pd.read_csv(uploaded_file)
@@ -384,6 +384,7 @@ with col2:
         st.pyplot(fig2)
     else:
         st.info("Not enough columns available for pairplot.")
+
 
 
 
