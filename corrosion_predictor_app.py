@@ -1,7 +1,4 @@
-# ============================================================
-# Streamlit App: Corrosion Rate Prediction & Pipeline Simulation
-# ============================================================
-
+#Import lib
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -14,14 +11,12 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import plotly.express as px
 import datetime, os, base64, random
 
-# ============================================================
+
 # PAGE CONFIGURATION
-# ============================================================
+
 st.set_page_config(page_title="Pipeline Corrosion Status Dashboard", layout="wide")
 
-# ============================================================
-# HEADER
-# ============================================================
+# HEADER(Logo + project name)
 logo_path = "utp logo.png"
 if os.path.exists(logo_path):
     with open(logo_path, "rb") as f:
@@ -35,9 +30,8 @@ if os.path.exists(logo_path):
     </div>
     """, unsafe_allow_html=True)
 
-# ============================================================
-# MODEL CONFIGURATION
-# ============================================================
+
+# ML + DL model import lib
 MODEL_PATH = "final_corrosion_model.keras"
 PREPROCESSOR_PATH = "preprocessor_corrosion.joblib"
 RF_PATH = "rf_model.joblib"
@@ -48,9 +42,9 @@ SAMPLE_20_PATH = "random_20_samples.csv"
 st.title("Corrosion Monitoring Dashboard")
 st.caption("Powered by Reinforced Deep Learning (DL + RF + XGB Ensemble) ✅")
 
-# ============================================================
-# LOAD MODELS & DATA SAFELY
-# ============================================================
+
+# load model + trained data
+
 try:
     model_dl = tf.keras.models.load_model(MODEL_PATH, compile=False)
     preprocessor = joblib.load(PREPROCESSOR_PATH)
@@ -63,9 +57,8 @@ except Exception as e:
     st.error(f"❌ Error loading model or data: {e}")
     st.stop()
 
-# ============================================================
-# HELPER FUNCTIONS
-# ============================================================
+# categorize function
+
 def get_severity(rate):
     if rate <= 0.1:
         return "🟢low"
@@ -90,9 +83,9 @@ def get_color(rate):
     else:
         return "#E74C3C"  # red
 
-# ============================================================
+
 # PIPELINE FIXED DATA
-# ============================================================
+
 if os.path.exists(SAMPLE_20_PATH):
     sample_df = pd.read_csv(SAMPLE_20_PATH)
 else:
@@ -112,15 +105,15 @@ for i, row in sample_df.iterrows():
         "Severity": get_severity_label(float(row.get("Pred_Ensemble(mm/yr)", 0)))
     }])
 
-# ============================================================
-# SECTION 1 — DATASET OVERVIEW
-# ============================================================
+
+# Dataset Overview
+
 st.subheader("Trained Dataset Overview")
 st.dataframe(df.head(), use_container_width=True)
 
-# ============================================================
-# SECTION 2 — REGIONAL PIPELINE OVERVIEW
-# ============================================================
+
+# REGIONAL PIPELINE OVERVIEW
+
 st.subheader("Regional Pipeline Overview")
 
 regions = ["Peninsular", "Sabah", "Sarawak"]
@@ -205,9 +198,8 @@ if st.session_state.selected_pipe_name:
     </div>
     """, unsafe_allow_html=True)
 
-# ============================================================
-# REGION SUMMARY TABLE
-# ============================================================
+
+# Sumarry table
 st.subheader("Region Pipe Summary")
 summary = []
 for p in region_pipes:
@@ -223,16 +215,16 @@ for p in region_pipes:
     })
 st.dataframe(pd.DataFrame(summary), use_container_width=True)
 
-# ============================================================
-# SECTION 4 — CSV UPLOAD FOR BULK PREDICTION
-# ============================================================
+
+# manual CSV upload
+
 st.subheader("Upload CSV for Bulk Prediction")
 uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
 if uploaded_file:
     user_df = pd.read_csv(uploaded_file)
     st.dataframe(user_df.head(), use_container_width=True)
 
-    if st.button("🔮 Run Predictions on uploaded CSV"):
+    if st.button(" Run Predictions on uploaded CSV"):
         try:
             expected = list(preprocessor.feature_names_in_)
             user_df_reindexed = user_df.reindex(columns=expected)
@@ -264,9 +256,9 @@ if uploaded_file:
         except Exception as e:
             st.error(f"❌ Error during prediction: {e}")
 
-# ============================================================
-# SECTION 5 — MODEL VISUALIZATION & ACCURACY
-# ============================================================
+
+# model accuracy and visualization
+
 st.subheader("📊 Model Prediction Comparison (training dataset)")
 X = df.drop(columns=["Rate (mm/yr)"], errors="ignore")
 y = df["Rate (mm/yr)"] if "Rate (mm/yr)" in df.columns else df.iloc[:, 0]  # fallback
@@ -304,9 +296,9 @@ st.markdown(f"""
     </h4>
 </div>
 """, unsafe_allow_html=True)
-# ============================================================
+
 # CORRELATION AND PAIRPLOT
-# ============================================================
+
 # Average Corrosion Rate by Material Family
 avg_rates = df.groupby("Material Family")["Rate (mm/yr)"].mean().sort_values()
 fig = px.bar(avg_rates, x=avg_rates.index, y=avg_rates.values,
@@ -365,7 +357,7 @@ col1, col2 = st.columns(2)
 
 # --- LEFT: Correlation Heatmap ---
 with col1:
-    st.markdown("#### 📈 Correlation Heatmap of Features")
+    st.markdown("#### Correlation Heatmap of Features")
     corr = df.corr(numeric_only=True)
     fig1, ax1 = plt.subplots(figsize=(6, 5))
     sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax1)
@@ -374,7 +366,7 @@ with col1:
 
 # --- RIGHT: Pairplot ---
 with col2:
-    st.markdown("#### 🔍 Feature Interaction Overview (Pairplot)")
+    st.markdown("#### Feature Interaction Overview (Pairplot)")
     selected_cols = [
         c for c in ["Rate (mm/yr)", "Concentration_%", "Temperature_C", "Aggressiveness_Index"]
         if c in df.columns
@@ -384,6 +376,7 @@ with col2:
         st.pyplot(fig2)
     else:
         st.info("Not enough columns available for pairplot.")
+
 
 
 
