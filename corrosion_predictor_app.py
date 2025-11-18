@@ -15,6 +15,19 @@ import datetime, os, base64, random
 # PAGE CONFIGURATION
 
 st.set_page_config(page_title="Pipeline Corrosion Status Dashboard", layout="wide")
+st.markdown("""
+    <style>
+        html, body, [class*="css"]  {
+            font-family: Verdana, sans-serif !important;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: Verdana, sans-serif !important;
+        }
+        .stMetric, .stMarkdown, .stDataFrame {
+            font-family: Verdana, sans-serif !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # HEADER(Logo + project name)
 logo_path = "utp logo.png"
@@ -376,6 +389,7 @@ with col2:
         st.pyplot(fig2)
     else:
         st.info("Not enough columns available for pairplot.")
+
 
 
 
