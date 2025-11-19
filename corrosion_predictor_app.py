@@ -78,7 +78,7 @@ def get_severity(rate):
     elif rate <= 1.0:
         return "🟡medium"
     else:
-        return "🔴hign"
+        return "🔴high"
 
 def get_severity_label(rate):
     if rate <= 0.1:
@@ -389,6 +389,7 @@ with col2:
         st.pyplot(fig2)
     else:
         st.info("Not enough columns available for pairplot.")
+
 
 
 
