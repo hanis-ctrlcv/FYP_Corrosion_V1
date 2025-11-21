@@ -189,7 +189,7 @@ pandas, numpy, seaborn
 <p>
 For academic or industrial collaboration, feel free to reach out:
 <br>
-<b>Email:</b> <i>hanisafifi02@gmail.com</i>
+<b>Email:</b> <i>azmi.hanisafifi@gmail.com</i>
 </p>
 
 <hr>
