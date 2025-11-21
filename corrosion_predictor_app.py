@@ -287,7 +287,7 @@ df_viz = pd.DataFrame({
     "Deep Learning": y_dl,
     "Random Forest": y_rf,
     "XGBoost": y_xgb,
-    "Reinforced Deep Learning": y_ens
+    "Ensemble Deep Learning": y_ens
 })
 
 melted = df_viz.melt(id_vars="Actual", var_name="Model", value_name="Predicted")
@@ -304,7 +304,7 @@ accuracy_pct = r2_val * 100
 st.markdown(f"""
 <div style='background-color:#E8F6EF;padding:15px;border-radius:10px;margin-top:10px;'>
     <h4 style='text-align:center;color:#1E8449;'>
-        ✅ <b>Reinforced Deep Learning Accuracy: {accuracy_pct:.2f}%</b><br>
+        ✅ <b>Ensemble Deep Learning Accuracy: {accuracy_pct:.2f}%</b><br>
         (R² = {r2_val:.4f}, MAE = {mae_val:.4f}, RMSE = {rmse_val:.4f})
     </h4>
 </div>
@@ -389,6 +389,7 @@ with col2:
         st.pyplot(fig2)
     else:
         st.info("Not enough columns available for pairplot.")
+
 
 
 
