@@ -314,9 +314,15 @@ st.markdown(f"""
 
 # Average Corrosion Rate by Material Family
 avg_rates = df.groupby("Material Family")["Rate (mm/yr)"].mean().sort_values()
-fig = px.bar(avg_rates, x=avg_rates.index, y=avg_rates.values,
-             title="Average Corrosion Rate by Material Family", color=avg_rates.values,
-             color_continuous_scale="RdYlGn_r")
+fig = px.bar(
+    avg_rates,
+    x=avg_rates.index,
+    y=avg_rates.values,
+    title="Average Corrosion Rate by Material Family",
+    color=avg_rates.values,
+    color_continuous_scale="RdYlGn_r",
+    labels={"y": "Corrosion Rate (mm/yr)", "x": "Material Family"}
+)
 st.plotly_chart(fig, use_container_width=True)
 
 
@@ -365,30 +371,6 @@ with col2:
     st.plotly_chart(fig2, use_container_width=True)
     
 
-# Create two columns
-col1, col2 = st.columns(2)
-
-# --- LEFT: Correlation Heatmap ---
-with col1:
-    st.markdown("#### Correlation Heatmap of Features")
-    corr = df.corr(numeric_only=True)
-    fig1, ax1 = plt.subplots(figsize=(6, 5))
-    sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", ax=ax1)
-    st.pyplot(fig1)
-
-
-# --- RIGHT: Pairplot ---
-with col2:
-    st.markdown("#### Feature Interaction Overview (Pairplot)")
-    selected_cols = [
-        c for c in ["Rate (mm/yr)", "Concentration_%", "Temperature_C", "Aggressiveness_Index"]
-        if c in df.columns
-    ]
-    if len(selected_cols) >= 2:
-        fig2 = sns.pairplot(df[selected_cols], diag_kind="kde", corner=True)
-        st.pyplot(fig2)
-    else:
-        st.info("Not enough columns available for pairplot.")
 
 
 
